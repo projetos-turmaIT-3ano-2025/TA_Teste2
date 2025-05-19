@@ -2,9 +2,9 @@
   "name": "meu-app",
   "version": "1.0.0",
   "description": "Aplicação web de educação financeira",
-  "main": "server/app.js",
+  "main": "app.js",
   "scripts": {
-    "start": "node server/app.js"
+    "start": "node app.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

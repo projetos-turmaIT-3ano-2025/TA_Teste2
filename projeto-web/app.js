@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
-const routes = require('../routes');
+const routes = require('./routes');
 
 // Inicializa o aplicativo Express
 const app = express();
@@ -19,7 +19,7 @@ const io = socketIo(server, {
 // Middleware para parsing de JSON
 app.use(express.json());
 // Arquivos estáticos da pasta raiz
-app.use(express.static(path.join(__dirname, './public')));
+app.use(express.static(path.join(__dirname,)));
 // Middleware de logging para requisições
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
