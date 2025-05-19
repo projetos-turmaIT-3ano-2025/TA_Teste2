@@ -1,0 +1,225 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "email": "admin@example.com",
+      "password": "admin123",
+      "isAdmin": true
+    },
+    {
+      "id": 2,
+      "username": "tobias",
+      "email": "tobias@gmail.com",
+      "password": "1234",
+      "role": "user"
+    },
+    {
+      "id": 2,
+      "username": "Agostinho",
+      "email": "agostinho@gmail.com",
+      "password": "1234",
+      "role": "user"
+    },
+    {
+      "id": "6b04f321-f4bb-4e95-9439-af66c1eaf6bd",
+      "username": "Esmael Chande",
+      "email": "esmaelchande@gmail.com",
+      "password": "admin123",
+      "isAdmin": true
+    },
+    {
+      "id": "81d46405-c2f3-4c5e-aec0-2cdfe4ae612c",
+      "username": "esilio",
+      "email": "esilio@gmail.com",
+      "password": "1234",
+      "isAdmin": false
+    }
+  ],
+  "reports": [
+    {
+      "id": "fd9e95ea-1350-4e82-aecb-3d8755c81e54",
+      "userId": "1",
+      "goal": "comprar carro",
+      "createdAt": "2025-05-13T14:37:02.324Z"
+    },
+    {
+      "id": "7acaeeda-1d50-49d0-b3c3-d9174964511b",
+      "userId": "1",
+      "goal": "comprar casa",
+      "createdAt": "2025-05-14T10:07:46.812Z"
+    }
+  ],
+  "definitions": [
+    {
+      "term": "Poupança",
+      "definition": "Guardar dinheiro para uso futuro, regulamentado pelo Banco de Moçambique, conforme Lei n.º 20/2020."
+    },
+    {
+      "term": "Custos Indiretos",
+      "definition": "Despesas como impostos e taxas, não diretamente ligadas a bens ou serviços."
+    }
+  ],
+  "financialData": [
+    {
+      "userId": 2,
+      "guestId": null,
+      "income": {
+        "salary": 11,
+        "otherSources": 11,
+        "otherSourceType": "Nenhuma"
+      },
+      "fixedExpenses": {
+        "housing": 11,
+        "food": 11,
+        "transport": 11,
+        "education": 11,
+        "health": 11,
+        "total": 55
+      },
+      "variableExpenses": {
+        "leisure": 11,
+        "nonEssential": 11,
+        "subscriptions": 11,
+        "emergencies": 11,
+        "total": 44
+      },
+      "savingsGoal": {
+        "propertyValue": 0,
+        "months": 0,
+        "initialDeposit": 0,
+        "interestRate": 0
+      },
+      "financialProfile": {
+        "dependents": 0,
+        "jobStability": "unknown",
+        "creditAccess": "unknown"
+      },
+      "updatedAt": "2025-05-13T10:31:43.109Z"
+    },
+    {
+      "userId": "1",
+      "income": {
+        "salary": 11111,
+        "otherSources": 11111,
+        "otherSourceType": "Barraca"
+      },
+      "fixedExpenses": {
+        "housing": 11,
+        "food": 11,
+        "transport": 11,
+        "education": 11,
+        "health": 11
+      },
+      "variableExpenses": {
+        "leisure": 11,
+        "nonEssential": 11,
+        "subscriptions": 11,
+        "emergencies": 11
+      }
+    },
+    {
+      "userId": "2",
+      "income": {
+        "salary": 100001,
+        "otherSources": 0,
+        "otherSourceType": "Nenhuma"
+      },
+      "fixedExpenses": {
+        "housing": 12,
+        "food": 11,
+        "transport": 11,
+        "education": 11,
+        "health": 11
+      },
+      "variableExpenses": {
+        "leisure": 11,
+        "nonEssential": 111,
+        "subscriptions": 111,
+        "emergencies": 11
+      }
+    }
+  ],
+  "guestPlans": [
+    {
+      "id": "96c79e4e-bc01-4e4d-81ff-d3f72ba4b59a",
+      "userId": "1",
+      "goal": "caro",
+      "createdAt": "2025-05-13T11:12:27.348Z"
+    },
+    {
+      "id": "9b41d0c8-cee6-477d-be3d-6fb703771bcd",
+      "userId": "1",
+      "goal": "caro",
+      "createdAt": "2025-05-13T11:18:09.716Z"
+    }
+  ],
+  "savings": [
+    {
+      "userId": 2,
+      "monthlySavings": 111,
+      "savingsGoal": {
+        "propertyValue": 111,
+        "months": 11,
+        "initialDeposit": 11,
+        "interestRate": 11
+      },
+      "financialProfile": {
+        "dependents": 11,
+        "jobStability": "stable",
+        "creditAccess": "yes"
+      },
+      "updatedAt": "2025-05-13T10:45:08.315Z"
+    },
+    {
+      "userId": "1",
+      "amount": 200,
+      "months": 2,
+      "total": 400
+    },
+    {
+      "userId": "1",
+      "amount": 1500,
+      "months": 4,
+      "total": 6000
+    },
+    {
+      "userId": "2",
+      "amount": 1500,
+      "months": 10,
+      "total": 15000
+    },
+    {
+      "userId": "2",
+      "amount": 11,
+      "months": 1,
+      "total": 11
+    },
+    {
+      "userId": "2",
+      "amount": 110,
+      "months": 7,
+      "total": 770
+    },
+    {
+      "userId": "2",
+      "amount": 1500,
+      "months": 103,
+      "total": 154500
+    },
+    {
+      "id": "eb8f0a13-ee67-4213-9a3d-1cfb34aeb03a",
+      "userId": "2",
+      "amount": 1000,
+      "months": 100,
+      "total": 100000
+    },
+    {
+      "id": "9418c6f0-58ff-4f48-b690-229765dffc17",
+      "userId": "2",
+      "amount": 123,
+      "months": 2,
+      "total": 246
+    }
+  ]
+}

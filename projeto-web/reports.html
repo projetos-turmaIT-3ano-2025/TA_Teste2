@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatórios Financeiros</title>
+  <!-- Importa Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Importa estilos personalizados -->
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <!-- Barra de navegação -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">Educação Financeira</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Início</a></li>
+          <li class="nav-item"><a class="nav-link" href="savings.html">Poupança</a></li>
+          <li class="nav-item"><a class="nav-link active" href="reports.html">Relatórios</a></li>
+          <li class="nav-item"><a class="nav-link" href="chat.html">Chat</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto" id="authLinks"></ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Conteúdo Principal -->
+  <div class="container mt-4">
+    <h1>Relatórios Financeiros</h1>
+    <p>Analise sua sustentabilidade financeira e acompanhe seus objetivos.</p>
+
+    <!-- Análise de Sustentabilidade Financeira -->
+    <h2>Análise de Sustentabilidade Financeira</h2>
+    <form id="sustainabilityForm" class="mb-4">
+      <div class="mb-3">
+        <label for="totalIncome" class="form-label">Rendimento Total Mensal (MZN)</label>
+        <input type="number" class="form-control" id="totalIncome" step="0.01" required>
+      </div>
+      <div class="mb-3">
+        <label for="totalExpenses" class="form-label">Despesas Totais Mensais (MZN)</label>
+        <input type="number" class="form-control" id="totalExpenses" step="0.01" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Analisar</button>
+    </form>
+    <div id="sustainabilityResult" class="card p-3 mb-4 d-none"></div>
+
+    <!-- Gráfico de Despesas -->
+    <h2>Distribuição de Despesas</h2>
+    <canvas id="expenseChart" class="mb-4"></canvas>
+
+    <!-- Formulário de Objetivos -->
+    <h2>Adicionar Objetivo</h2>
+    <form id="reportForm" class="mb-4">
+      <div class="mb-3">
+        <label for="goal" class="form-label">Objetivo Financeiro</label>
+        <input type="text" class="form-control" id="goal" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Salvar Objetivo</button>
+    </form>
+
+    <!-- Lista de Objetivos -->
+    <h2>Seus Objetivos</h2>
+    <div id="reportsList"></div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/socket.io@4.5.0/client-dist/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    // Inicializa conexão WebSocket
+    const socket = io();
+
+    // Função para exibir notificações flutuantes
+    function showNotification(type, message) {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 3000);
+    }
+
+    // Escuta notificações do servidor
+    socket.on('notification', ({ type, message }) => {
+      showNotification(type, message);
+    });
+
+    // Atualiza a barra de navegação com base no status de login
+    function updateNavbar() {
+      const user = localStorage.getItem('user');
+      const authLinks = document.getElementById('authLinks');
+      if (user) {
+        authLinks.innerHTML = `<li class="nav-item"><a class="nav-link" href="#" onclick="logout()">Sair</a></li>`;
+      } else {
+        authLinks.innerHTML = `
+          <li class="nav-item"><a class="nav-link" href="login.html">Login</a></li>
+          <li class="nav-item"><a class="nav-link" href="register.html">Cadastrar</a></li>
+        `;
+      }
+    }
+
+    // Função de logout
+    function logout() {
+      localStorage.removeItem('user');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('isAdmin');
+      window.location.href = 'index.html';
+    }
+
+    // Inicializa o gráfico de despesas
+    let expenseChart;
+    function initChart() {
+      const ctx = document.getElementById('expenseChart').getContext('2d');
+      expenseChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Habitação', 'Alimentação', 'Transporte', 'Educação', 'Saúde', 'Lazer', 'Outros'],
+          datasets: [{
+            data: [0, 0, 0, 0, 0, 0, 0],
+            backgroundColor: [
+              '#8B4513', // Marrom
+              '#F5F5DC', // Bege
+              '#FFFFFF', // Branco
+              '#D2691E', // Chocolate
+              '#A0522D', // Sienna
+              '#DEB887', // BurlyWood
+              '#CD853F'  // Peru
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' }
+          }
+        }
+      });
+    }
+
+    // Atualiza o gráfico com dados financeiros
+    async function updateChart() {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+      try {
+        const response = await fetch(`/api/financial-data/${userId}`);
+        const data = await response.json();
+        if (Object.keys(data).length) {
+          const fixed = data.fixedExpenses;
+          const variable = data.variableExpenses;
+          expenseChart.data.datasets[0].data = [
+            fixed.housing,
+            fixed.food,
+            fixed.transport,
+            fixed.education,
+            fixed.health,
+            variable.leisure,
+            variable.nonEssential + variable.subscriptions + variable.emergencies
+          ];
+          expenseChart.update();
+        }
+      } catch (error) {
+        showNotification('error', 'Erro ao atualizar gráfico.');
+      }
+    }
+
+    // Carrega objetivos financeiros
+    async function loadReports() {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+      try {
+        const response = await fetch(`/api/reports/${userId}`);
+        const reports = await response.json();
+        document.getElementById('reportsList').innerHTML = reports.length ? reports.map(r => `
+          <div class="card mb-2">
+            <div class="card-body">
+              <p><strong>Objetivo:</strong> ${r.goal}</p>
+              <p><strong>Data:</strong> ${new Date(r.createdAt).toLocaleDateString('pt-BR')}</p>
+            </div>
+          </div>
+        `).join('') : '<p>Nenhum objetivo registrado.</p>';
+      } catch (error) {
+        showNotification('error', 'Erro ao carregar objetivos.');
+      }
+    }
+
+    // Manipula envio do formulário de objetivos
+    document.getElementById('reportForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        showNotification('error', 'Faça login para salvar objetivos.');
+        return;
+      }
+      const goal = document.getElementById('goal').value.trim();
+      if (!goal) {
+        showNotification('error', 'Por favor, insira um objetivo.');
+        return;
+      }
+      try {
+        const response = await fetch('/api/reports', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, goal })
+        });
+        const result = await response.json();
+        if (response.ok) {
+          showNotification('success', result.message);
+          socket.emit('reportUpdate', result.data);
+          loadReports();
+          document.getElementById('reportForm').reset();
+        } else {
+          throw new Error(result.error);
+        }
+      } catch (error) {
+        showNotification('error', error.message || 'Erro ao salvar objetivo.');
+      }
+    });
+
+    // Escuta atualizações de relatórios
+    socket.on('reportUpdate', () => {
+      loadReports();
+    });
+
+    // Manipula análise de sustentabilidade financeira
+    document.getElementById('sustainabilityForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const totalIncome = parseFloat(document.getElementById('totalIncome').value);
+      const totalExpenses = parseFloat(document.getElementById('totalExpenses').value);
+      const resultDiv = document.getElementById('sustainabilityResult');
+
+      if (isNaN(totalIncome) || isNaN(totalExpenses) || totalIncome < 0 || totalExpenses < 0) {
+        showNotification('error', 'Por favor, insira valores válidos.');
+        return;
+      }
+
+      // Calcula sustentabilidade
+      const savings = totalIncome - totalExpenses;
+      const savingsPercentage = (savings / totalIncome) * 100;
+      let status, recommendation;
+
+      if (savingsPercentage >= 20) {
+        status = 'Excelente';
+        recommendation = 'Você está em uma ótima posição financeira! Continue poupando e considere investir.';
+      } else if (savingsPercentage >= 10) {
+        status = 'Boa';
+        recommendation = 'Você tem uma boa margem de poupança. Tente reduzir despesas variáveis para aumentar sua poupança.';
+      } else if (savingsPercentage >= 0) {
+        status = 'Suficiente';
+        recommendation = 'Você está equilibrado, mas pode melhorar. Reveja suas despesas para liberar mais recursos.';
+      } else {
+        status = 'Crítica';
+        recommendation = 'Suas despesas excedem seu rendimento. Considere cortar gastos não essenciais e buscar ajuda financeira.';
+      }
+
+      // Exibe resultado
+      resultDiv.classList.remove('d-none');
+      resultDiv.innerHTML = `
+        <h3>Resultado da Análise</h3>
+        <p><strong>Rendimento Total:</strong> ${totalIncome.toFixed(2)} MZN</p>
+        <p><strong>Despesas Totais:</strong> ${totalExpenses.toFixed(2)} MZN</p>
+        <p><strong>Poupança Mensal:</strong> ${savings.toFixed(2)} MZN</p>
+        <p><strong>Percentual de Poupança:</strong> ${savingsPercentage.toFixed(2)}%</p>
+        <p><strong>Status:</strong> ${status}</p>
+        <p><strong>Recomendação:</strong> ${recommendation}</p>
+      `;
+      showNotification('success', 'Análise concluída com sucesso!');
+    });
+
+    // Inicializa a página
+    socket.emit('registerUser', { userId: localStorage.getItem('userId') });
+    updateNavbar();
+    initChart();
+    updateChart();
+    loadReports();
+  </script>
+</body>
+</html>

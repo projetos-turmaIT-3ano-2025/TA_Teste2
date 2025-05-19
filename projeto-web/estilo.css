@@ -1,0 +1,212 @@
+/* Estilo geral do corpo */
+body {
+  background-color: #FFFFFF; /* Branco */
+  color: #000000; /* Preto */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Estilo da barra de navegação */
+.navbar {
+  background-color: #8B4513 !important; /* Marrom */
+}
+
+/* Estilo dos links da navbar */
+.navbar-brand, .nav-link {
+  color: #FFFFFF !important; /* Branco */
+}
+
+/* Efeito hover nos links da navbar */
+.navbar-brand:hover, .nav-link:hover {
+  color: #F5F5DC !important; /* Bege */
+}
+
+/* Estilo dos cartões e tabelas */
+.card, .table {
+  background-color: #F5F5DC; /* Bege */
+  border: 1px solid #8B4513; /* Marrom */
+  border-radius: 10px;
+}
+
+/* Efeito hover nos cartões */
+.card:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s;
+}
+
+/* Estilo do botão primário */
+.btn-primary {
+  background-color: #8B4513; /* Marrom */
+  border-color: #8B4513;
+}
+
+/* Efeito hover no botão primário */
+.btn-primary:hover {
+  background-color: #F5F5DC; /* Bege */
+  color: #000000; /* Preto */
+  border-color: #8B4513;
+}
+
+/* Estilo do botão secundário */
+.btn-secondary {
+  background-color: #F5F5DC; /* Bege */
+  border-color: #8B4513;
+  color: #000000;
+}
+
+/* Efeito hover no botão secundário */
+.btn-secondary:hover {
+  background-color: #8B4513;
+  color: #FFFFFF;
+}
+
+/* Estilo do botão de perigo */
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+/* Efeito hover no botão de perigo */
+.btn-danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+}
+
+/* Estilo do container do chat */
+#chatBox, #adminChatBox {
+  background-color: #FFFFFF; /* Branco */
+  border: 1px solid #8B4513; /* Marrom */
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-height: 600px;
+  overflow-y: auto;
+  min-height: 400px;
+}
+
+/* Estilo das mensagens do chat */
+.message {
+  max-width: 70%;
+  padding: 12px 18px;
+  margin: 8px 10px;
+  border-radius: 20px;
+  line-height: 1.5;
+  animation: slideIn 0.3s ease;
+  position: relative;
+  word-wrap: break-word;
+}
+
+/* Mensagens do usuário (alinhadas à direita) */
+.message.user {
+  background: #F5F5DC; /* Bege */
+  color: #000000; /* Preto */
+  margin-left: auto;
+  text-align: right;
+  border-bottom-right-radius: 5px;
+}
+
+/* Mensagens do bot ou admin (alinhadas à esquerda) */
+.message.bot, .message.admin {
+  background: #E0E0E0; /* Cinza claro */
+  color: #000000; /* Preto */
+  margin-right: auto;
+  border-bottom-left-radius: 5px;
+}
+
+/* Animação de entrada das mensagens */
+@keyframes slideIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Estilo do gráfico de despesas */
+canvas#expenseChart {
+  max-width: 400px !important; /* Tamanho normal */
+  background: #FFFFFF; /* Branco */
+  border: 1px solid #8B4513; /* Marrom */
+  border-radius: 10px;
+  margin: 0 auto;
+}
+
+/* Estilo dos campos de entrada */
+.input-group input, textarea {
+  border-radius: 10px 0 0 10px;
+  border: 1px solid #8B4513;
+}
+
+/* Estilo dos botões do input group */
+.input-group button {
+  border-radius: 0 10px 10px 0;
+}
+
+/* Efeito de foco nos campos de entrada */
+#message, #adminChatInput, #queryInput, #guestName {
+  transition: border-color 0.3s ease;
+}
+
+#message:focus, #adminChatInput:focus, #queryInput:focus, #guestName:focus {
+  border-color: #8B4513;
+  box-shadow: 0 0 5px rgba(139, 69, 19, 0.5);
+}
+
+/* Estilo das notificações flutuantes */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  padding: 15px 20px;
+  border-radius: 8px;
+  animation: fadeInOut 3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Notificação de sucesso */
+.notification.success {
+  background: #F5F5DC;
+  color: #000000;
+  border: 1px solid #8B4513;
+}
+
+/* Notificação de erro */
+.notification.error {
+  background: #dc3545;
+  color: #FFFFFF;
+  border: 1px solid #bd2130;
+}
+
+/* Animação das notificações */
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-20px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-20px); }
+}
+
+/* Estilo do indicador de status online/offline */
+.online-status {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+/* Status online */
+.online-status.online {
+  background: #28a745;
+}
+
+/* Status offline */
+.online-status.offline {
+  background: #dc3545;
+}
+
+/* Estilo da sessão de boas-vindas */
+.welcome-section {
+  background: #F5F5DC;
+  border: 1px solid #8B4513;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}

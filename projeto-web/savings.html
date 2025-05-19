@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poupança</title>
+  <!-- Importa Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Importa estilos personalizados -->
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <!-- Barra de navegação -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">Educação Financeira</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Início</a></li>
+          <li class="nav-item"><a class="nav-link active" href="savings.html">Poupança</a></li>
+          <li class="nav-item"><a class="nav-link" href="reports.html">Relatórios</a></li>
+          <li class="nav-item"><a class="nav-link" href="chat.html">Chat</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto" id="authLinks"></ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Conteúdo Principal -->
+  <div class="container mt-4">
+    <h1>Poupança</h1>
+    <p>Planeje sua poupança, conforme a Lei n.º 20/2020.</p>
+
+    <!-- Capacidade de Poupança -->
+    <h2>Capacidade de Poupança</h2>
+    <div id="savingsCapacity" class="card mb-4 p-3"></div>
+
+    <!-- Formulário de Poupança -->
+    <h2>Adicionar Poupança</h2>
+    <form id="savingsForm" class="mb-4">
+      <div class="mb-3">
+        <label for="amount" class="form-label">Valor Mensal a Poupar (MZN)</label>
+        <input type="number" class="form-control" id="amount" step="0.01" required>
+      </div>
+      <div class="mb-3">
+        <label for="months" class="form-label">Meses</label>
+        <input type="number" class="form-control" id="months" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Salvar Poupança</button>
+    </form>
+    <h2>Suas Poupanças</h2>
+    <div id="savingsList"></div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/socket.io@4.5.0/client-dist/socket.io.min.js"></script>
+  <script>
+    // Inicializa conexão WebSocket
+    const socket = io();
+
+    // Função para exibir notificações flutuantes
+    function showNotification(type, message) {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 3000);
+    }
+
+    // Escuta notificações do servidor
+    socket.on('notification', ({ type, message }) => {
+      showNotification(type, message);
+    });
+
+    // Atualiza a barra de navegação
+    function updateNavbar() {
+      const user = localStorage.getItem('user');
+      const authLinks = document.getElementById('authLinks');
+      if (user) {
+        authLinks.innerHTML = `<li class="nav-item"><a class="nav-link" href="#" onclick="logout()">Sair</a></li>`;
+      } else {
+        authLinks.innerHTML = `
+          <li class="nav-item"><a class="nav-link" href="login.html">Login</a></li>
+          <li class="nav-item"><a class="nav-link" href="register.html">Cadastrar</a></li>
+        `;
+      }
+    }
+
+    // Função de logout
+    function logout() {
+      localStorage.removeItem('user');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('isAdmin');
+      window.location.href = 'index.html';
+    }
+
+    // Calcula a capacidade de poupança
+    async function calculateSavingsCapacity() {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+      try {
+        const response = await fetch(`/api/financial-data/${userId}`);
+        const data = await response.json();
+        if (!Object.keys(data).length) return;
+
+        const totalIncome = parseFloat(data.income.salary) + parseFloat(data.income.otherSources);
+        const totalFixedExpenses = Object.values(data.fixedExpenses).reduce((sum, val) => sum + parseFloat(val), 0);
+        const totalVariableExpenses = Object.values(data.variableExpenses).reduce((sum, val) => sum + parseFloat(val), 0);
+        const essentialExpenses = totalFixedExpenses + data.variableExpenses.emergencies;
+        const savingsCapacity = totalIncome - essentialExpenses;
+
+        document.getElementById('savingsCapacity').innerHTML = `
+          <p><strong>Rendimento Total:</strong> ${totalIncome.toFixed(2)} MZN</p>
+          <p><strong>Despesas Essenciais:</strong> ${essentialExpenses.toFixed(2)} MZN</p>
+          <p><strong>Capacidade de Poupança:</strong> ${savingsCapacity.toFixed(2)} MZN/mês</p>
+          ${savingsCapacity < 0 ? '<p class="text-danger">Atenção: Suas despesas essenciais excedem seu rendimento.</p>' : ''}
+        `;
+      } catch (error) {
+        showNotification('error', 'Erro ao calcular capacidade de poupança.');
+      }
+    }
+
+    // Carrega a lista de poupanças
+    async function loadSavings() {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+      try {
+        const response = await fetch(`/api/savings/${userId}`);
+        const savings = await response.json();
+        document.getElementById('savingsList').innerHTML = savings.length ? savings.map(s => `
+          <div class="card mb-2">
+            <div class="card-body">
+              <p>Valor Mensal: ${s.amount.toFixed(2)} MZN</p>
+              <p>Meses: ${s.months}</p>
+              <p>Total Acumulado: ${s.total.toFixed(2)} MZN</p>
+              <button class="btn btn-secondary btn-sm" onclick="editSaving('${s.id}', ${s.amount}, ${s.months})">Editar</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteSaving('${s.id}')">Excluir</button>
+            </div>
+          </div>
+        `).join('') : '<p>Nenhuma poupança registrada.</p>';
+      } catch (error) {
+        showNotification('error', 'Erro ao carregar poupanças.');
+      }
+    }
+
+    // Manipula envio do formulário de poupança
+    document.getElementById('savingsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        showNotification('error', 'Faça login para salvar poupança.');
+        return;
+      }
+
+      const data = {
+        userId,
+        amount: parseFloat(document.getElementById('amount').value),
+        months: parseInt(document.getElementById('months').value)
+      };
+
+      if (isNaN(data.amount) || isNaN(data.months) || data.amount < 0 || data.months <= 0) {
+        showNotification('error', 'Por favor, insira valores válidos.');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/savings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (response.ok) {
+          showNotification('success', `Poupança salva! Total: ${result.data.total.toFixed(2)} MZN em ${result.data.months} meses.`);
+          loadSavings();
+          calculateSavingsCapacity();
+          document.getElementById('savingsForm').reset();
+        } else {
+          throw new Error(result.error);
+        }
+      } catch (error) {
+        showNotification('error', error.message || 'Erro ao salvar poupança.');
+      }
+    });
+
+    // Função para editar poupança
+    window.editSaving = async (id, amount, months) => {
+      document.getElementById('amount').value = amount;
+      document.getElementById('months').value = months;
+      const form = document.getElementById('savingsForm');
+      const originalSubmit = form.onsubmit;
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const data = {
+          amount: parseFloat(document.getElementById('amount').value),
+          months: parseInt(document.getElementById('months').value)
+        };
+        if (isNaN(data.amount) || isNaN(data.months) || data.amount < 0 || data.months <= 0) {
+          showNotification('error', 'Por favor, insira valores válidos.');
+          return;
+        }
+        try {
+          const response = await fetch(`/api/savings/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          const result = await response.json();
+          if (response.ok) {
+            showNotification('success', result.message);
+            loadSavings();
+            calculateSavingsCapacity();
+            form.onsubmit = originalSubmit;
+            form.reset();
+          } else {
+            throw new Error(result.error);
+          }
+        } catch (error) {
+          showNotification('error', error.message || 'Erro ao atualizar poupança.');
+        }
+      };
+    };
+
+    // Função para excluir poupança
+    window.deleteSaving = async (id) => {
+      try {
+        const response = await fetch(`/api/savings/${id}`, {
+          method: 'DELETE'
+        });
+        const result = await response.json();
+        if (response.ok) {
+          showNotification('success', result.message);
+          loadSavings();
+          calculateSavingsCapacity();
+        } else {
+          throw new Error(result.error);
+        }
+      } catch (error) {
+        showNotification('error', error.message || 'Erro ao excluir poupança.');
+      }
+    };
+
+    // Inicializa a página
+    socket.emit('registerUser', { userId: localStorage.getItem('userId') });
+    updateNavbar();
+    loadSavings();
+    calculateSavingsCapacity();
+  </script>
+</body>
+</html>

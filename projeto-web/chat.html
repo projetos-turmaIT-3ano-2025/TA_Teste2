@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Financeiro</title>
+  <!-- Importa Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Importa estilos personalizados -->
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <!-- Barra de navegação -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">Educação Financeira</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Início</a></li>
+          <li class="nav-item"><a class="nav-link" href="savings.html">Poupança</a></li>
+          <li class="nav-item"><a class="nav-link" href="reports.html">Relatórios</a></li>
+          <li class="nav-item"><a class="nav-link active" href="chat.html">Chat</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto" id="authLinks"></ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Conteúdo Principal -->
+  <div class="container mt-4">
+    <h1>Chat Financeiro</h1>
+    <p>Faça até 6 perguntas ao nosso bot. Após isso, fale diretamente com o administrador.</p>
+    <!-- Formulário para nome do visitante -->
+    <div id="guestNameSection" class="mb-4">
+      <form id="guestNameForm">
+        <div class="mb-3">
+          <label for="guestName" class="form-label">Digite seu nome para começar:</label>
+          <input type="text" class="form-control" id="guestName" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Iniciar Chat</button>
+      </form>
+    </div>
+    <!-- Container do chat -->
+    <div id="chatBox" class="p-3 mb-3 d-none"></div>
+    <!-- Formulário de mensagens do chat -->
+    <form id="chatForm" class="mb-3 d-none">
+      <div class="input-group">
+        <input type="text" id="message" class="form-control" placeholder="Digite sua mensagem..." required>
+        <button type="submit" class="btn btn-primary">Enviar</button>
+      </div>
+    </form>
+    <!-- Mensagem de conversa esgotada -->
+    <div id="exhaustedMessage" class="alert alert-info d-none">
+      Conversa com bot esgotada. Faça login ou cadastre-se para falar com o administrador.
+      <a href="login.html" class="btn btn-primary btn-sm ms-2">Login</a>
+      <a href="register.html" class="btn btn-secondary btn-sm ms-2">Cadastrar</a>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/socket.io@4.5.0/client-dist/socket.io.min.js"></script>
+  <script>
+    // Inicializa conexão WebSocket
+    const socket = io();
+
+    // Função para exibir notificações flutuantes
+    function showNotification(type, message) {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 3000);
+    }
+
+    // Escuta notificações do servidor
+    socket.on('notification', ({ type, message }) => {
+      showNotification(type, message);
+    });
+
+    // Atualiza a barra de navegação
+    function updateNavbar() {
+      const user = localStorage.getItem('user');
+      const authLinks = document.getElementById('authLinks');
+      if (user) {
+        authLinks.innerHTML = `<li class="nav-item"><a class="nav-link" href="#" onclick="logout()">Sair</a></li>`;
+      } else {
+        authLinks.innerHTML = `
+          <li class="nav-item"><a class="nav-link" href="login.html">Login</a></li>
+          <li class="nav-item"><a class="nav-link" href="register.html">Cadastrar</a></li>
+        `;
+      }
+    }
+
+    // Função de logout
+    function logout() {
+      localStorage.removeItem('user');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('isAdmin');
+      localStorage.removeItem('chatMessages');
+      localStorage.removeItem('replyCount'); // Remove contador ao fazer logout
+      window.location.href = 'index.html';
+    }
+
+    // Elementos do DOM
+    const guestNameSection = document.getElementById('guestNameSection');
+    const guestNameForm = document.getElementById('guestNameForm');
+    const guestNameInput = document.getElementById('guestName');
+    const chatBox = document.getElementById('chatBox');
+    const chatForm = document.getElementById('chatForm');
+    const messageInput = document.getElementById('message');
+    const exhaustedMessage = document.getElementById('exhaustedMessage');
+    let replyCount = parseInt(localStorage.getItem('replyCount') || '0'); // Carrega contador do localStorage
+    let userName = localStorage.getItem('user') || null;
+    const maxReplies = 6;
+
+    // Carrega mensagens do localStorage
+    function loadMessages() {
+      const messages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
+      messages.forEach(msg => {
+        const div = document.createElement('div');
+        div.className = `message ${msg.user === userName ? 'user' : 'bot'}`;
+        div.textContent = `${msg.user}: ${msg.text}`;
+        chatBox.appendChild(div);
+      });
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Salva mensagem no localStorage
+    function saveMessage(msg) {
+      const messages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
+      messages.push(msg);
+      localStorage.setItem('chatMessages', JSON.stringify(messages));
+    }
+
+    // Respostas automáticas do bot
+    const autoReplies = [
+      'Como posso ajudar com suas finanças hoje?',
+      'Quer dicas para organizar seu orçamento?',
+      'Você sabia que poupar 10% do seu rendimento pode fazer diferença?',
+      'Alguma dúvida específica sobre suas despesas?',
+      'Já pensou em metas financeiras de longo prazo?',
+      'Vamos planejar seu futuro financeiro juntos?'
+    ];
+
+    // Cumprimentos reconhecidos
+    const greetings = ['olá', 'oi', 'bom dia', 'boa tarde', 'boa noite'];
+
+    // Palavras-chave financeiras e respostas
+    const financialKeywords = {
+      'orçamento': 'Um bom orçamento começa com o controle de despesas fixas e variáveis. Quer ajuda para criar um?',
+      'poupança': 'Poupar regularmente é essencial! Recomendo reservar 10-20% do seu rendimento. Posso calcular sua capacidade de poupança?',
+      'despesas': 'Divida suas despesas em fixas (como habitação) e variáveis (como lazer). Quer dicas para reduzir gastos?',
+      'investir': 'Investir requer planejamento. Primeiro, crie uma reserva de emergência. Interessado em opções seguras?',
+      'dívida': 'Pague dívidas com juros altos primeiro. Quer um plano para quitá-las mais rápido?'
+    };
+
+    // Verifica se a mensagem contém cumprimento
+    function isGreeting(message) {
+      return greetings.some(g => message.toLowerCase().includes(g));
+    }
+
+    // Busca resposta baseada em palavras-chave
+    function getFinancialResponse(message) {
+      const lowerMessage = message.toLowerCase();
+      for (const [keyword, response] of Object.entries(financialKeywords)) {
+        if (lowerMessage.includes(keyword)) {
+          return response;
+        }
+      }
+      return null;
+    }
+
+    // Função para configurar o estado do chat
+    function setupChatState() {
+      if (userName) {
+        guestNameSection.classList.add('d-none');
+        chatBox.classList.remove('d-none');
+        if (replyCount >= maxReplies) {
+          if (localStorage.getItem('userId')) {
+            // Usuário logado: conversa com administrador
+            chatForm.classList.remove('d-none');
+            const adminMsg = {
+              text: 'Agora você está conversando com o administrador. Envie sua mensagem!',
+              user: 'Sistema'
+            };
+            socket.emit('chatMessage', adminMsg);
+          } else {
+            // Usuário não logado: exibe mensagem de login
+            chatForm.classList.add('d-none');
+            exhaustedMessage.classList.remove('d-none');
+          }
+        } else {
+          // Usuário logado, mas não esgotou mensagens
+          chatForm.classList.remove('d-none');
+        }
+        socket.emit('registerUser', { userId: localStorage.getItem('userId'), username: userName });
+        loadMessages();
+      }
+    }
+
+    // Verifica estado inicial do chat
+    setupChatState();
+
+    // Manipula envio do nome do visitante
+    guestNameForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      userName = guestNameInput.value.trim();
+      if (!userName) {
+        showNotification('error', 'Por favor, insira seu nome.');
+        return;
+      }
+      guestNameSection.classList.add('d-none');
+      chatBox.classList.remove('d-none');
+      chatForm.classList.remove('d-none');
+      socket.emit('registerUser', { guestName: userName, username: userName });
+      const welcomeMsg = { user: 'Bot', text: `Olá, ${userName}! Como posso ajudar com suas finanças?` };
+      socket.emit('chatMessage', welcomeMsg);
+      saveMessage(welcomeMsg);
+    });
+
+    // Escuta mensagens do servidor
+    socket.on('chatMessage', (msg) => {
+      const div = document.createElement('div');
+      // Mensagens do administrador e do bot aparecem no lado 'bot' (esquerda)
+      div.className = `message ${msg.user === userName ? 'user' : 'bot'}`;
+      div.textContent = `${msg.user}: ${msg.text}`;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      saveMessage(msg);
+      console.log(`Mensagem recebida: ${msg.user}: ${msg.text}`);
+    });
+
+    // Manipula envio de mensagens do usuário
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const message = messageInput.value.trim();
+      if (!message) return;
+
+      const msg = { text: message, user: userName };
+      socket.emit('chatMessage', msg);
+      messageInput.value = '';
+      console.log(`Mensagem enviada: ${userName}: ${message}`);
+
+      // Respostas do bot apenas se não esgotou o limite
+      if (replyCount < maxReplies) {
+        setTimeout(() => {
+          let reply = autoReplies[replyCount];
+          if (isGreeting(message)) {
+            reply = `Olá, ${userName}! Como posso ajudar com suas finanças?`;
+          } else {
+            const financialReply = getFinancialResponse(message);
+            reply = financialReply || reply;
+          }
+          const botMsg = { text: reply, user: 'Bot' };
+          socket.emit('chatMessage', botMsg);
+          replyCount++;
+          localStorage.setItem('replyCount', replyCount); // Persiste contador
+          if (replyCount === maxReplies) {
+            if (!localStorage.getItem('userId')) {
+              // Usuários não logados veem mensagem de login
+              chatForm.classList.add('d-none');
+              exhaustedMessage.classList.remove('d-none');
+              const exhaustedMsg = {
+                text: 'Conversa com bot esgotada. Faça login ou cadastre-se para falar com o administrador.',
+                user: 'Bot'
+              };
+              socket.emit('chatMessage', exhaustedMsg);
+            } else {
+              // Usuários logados continuam conversando com o admin
+              const adminMsg = {
+                text: 'Agora você está conversando com o administrador. Envie sua mensagem!',
+                user: 'Sistema'
+              };
+              socket.emit('chatMessage', adminMsg);
+            }
+          }
+        }, 500);
+      }
+    });
+
+    // Efeito visual no campo de mensagem
+    messageInput.addEventListener('input', () => {
+      if (messageInput.value.trim()) {
+        messageInput.classList.add('border-primary');
+      } else {
+        messageInput.classList.remove('border-primary');
+      }
+    });
+
+    // Inicializa a página
+    updateNavbar();
+  </script>
+</body>
+</html>

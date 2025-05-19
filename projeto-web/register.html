@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro</title>
+  <!-- Importa Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Importa estilos personalizados -->
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <!-- Barra de navegação -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">Educação Financeira</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Início</a></li>
+          <li class="nav-item"><a class="nav-link" href="savings.html">Poupança</a></li>
+          <li class="nav-item"><a class="nav-link" href="reports.html">Relatórios</a></li>
+          <li class="nav-item"><a class="nav-link" href="chat.html">Chat</a></li>
+        </ul>
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="login.html">Login</a></li>
+          <li class="nav-item"><a class="nav-link active" href="register.html">Cadastrar</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Conteúdo Principal -->
+  <div class="container mt-4">
+    <h1>Cadastro</h1>
+    <form id="registerForm" class="mb-4">
+      <div class="mb-3">
+        <label for="username" class="form-label">Nome</label>
+        <input type="text" class="form-control" id="username" required>
+      </div>
+      <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" required>
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Senha</label>
+        <input type="password" class="form-control" id="password" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Cadastrar</button>
+    </form>
+    <div id="errorMessage" class="alert alert-danger d-none"></div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Função para exibir notificações flutuantes
+    function showNotification(type, message) {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 3000);
+    }
+
+    // Manipula envio do formulário de cadastro
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const errorMessage = document.getElementById('errorMessage');
+
+      if (!username || !email || !password) {
+        errorMessage.textContent = 'Por favor, preencha todos os campos.';
+        errorMessage.classList.remove('d-none');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password })
+        });
+        const result = await response.json();
+        if (response.ok) {
+          showNotification('success', 'Cadastro bem-sucedido! Faça login para continuar.');
+          setTimeout(() => window.location.href = 'login.html', 2000);
+        } else {
+          console.log(`Erro no cadastro: ${result.error}, email=${email}`);
+          errorMessage.textContent = result.error || 'Erro ao cadastrar. Tente novamente.';
+          errorMessage.classList.remove('d-none');
+        }
+      } catch (error) {
+        console.error('Erro na requisição de cadastro:', error);
+        errorMessage.textContent = 'Erro ao conectar ao servidor. Tente novamente mais tarde.';
+        errorMessage.classList.remove('d-none');
+      }
+    });
+  </script>
+</body>
+</html>
